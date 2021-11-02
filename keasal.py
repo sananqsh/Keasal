@@ -2,69 +2,91 @@ from cs50 import SQL
 
 db = SQL("sqlite:///KeasalDB.db")
 
-def guide(position):
-    if position == "0" or not position.isdigit():
-        print("1.Manage languages")
+position = 0
+
+positions = ["main", "language", "category", "word"]
+
+def guide(cmd, ref_id):
+    # exceptions: pos=0 & cmd > 2 || (pos in {1,2} & cmd > 4) || (pos in {2,3} &)
+
+
+    global position
+    # print(f"cmd: {cmd}")
+    # print(f"position: {position}")
+    # print(f"ref_id: {ref_id}")
+
+    if cmd == "0" or not cmd.isdigit():
+        ref_id = 0
+        # global position
+        position = 0
+        next_lvl = positions[position+1]
+        print(f"1.Manage in {next_lvl} level")
         print("2.About")
-        return
+        return 0
     else:
         print("0.Go to main")
-        if position == "1":
-            print_langs()
-            print("11.Add new language")
-        #Manage current languages:
-            print("12.Edit language(name)")
-            print("13.Remove language")
-            print("14.Inner access to the language")
-            return
-        elif position == "11":
-            print("Input a name for the new language: ")
-            new_lang = input()
-            db.execute("INSERT INTO langs(name) VALUES(?);", new_lang)
-            return
-        elif int(position) in range(12, 15):
-            # print("Edit, Remove or Gain access to a current language by entering its name")
-            input_lang = input("Language name: ")
-            sel_lang = db.execute("SELECT * FROM langs WHERE name = ?", input_lang)
-            if len(sel_lang) == 0:
-                print("Such language does not exist in the database!")
+        if 0 < position:
+            print_elements(cur_lvl)
+
+        if cmd == "1":
+
+            
+            position +=1
+            cur_lvl = positions[position]
+            if position < 3:
+                next_lvl = positions[position+1]
+
+            print(f"position: {position}")
+            if position in {1, 2}:
+                print(f"1.Manage in {next_lvl} level")
+
+            print(f"2.Add new {cur_lvl}")
+            print(f"3.Edit {cur_lvl}")
+            print(f"4.Remove {cur_lvl}")
+
+            return ref_id
+        elif cmd == "2":
+            print("TODO ADD")
+            # add()
+        elif cmd == "3" or cmd == "4":
+            ###
+            selected = db.execute("SELECT * FROM ? WHERE name = ?", cur_lvl, input(f"Input the {cur_lvl} you want to access: "))
+            if len(selected) == 0:
+                print(f"Such {cur_lvl} does not exist in the database!")
                 return
-            sel_lang = sel_lang[0]["name"]
-            # For debug:
-            print(sel_lang)
-            if position == "12":
-                print("TODO: Edit lang")
-                new_name = input("The new name for this language: ")
-                db.execute("UPDATE langs SET name=? WHERE name=?", new_name, sel_lang)
-            if position == "13":
-                db.execute("DELETE FROM langs WHERE name=?;", sel_lang)
-            if position == "14":
-                print("TODO: Inner Access to lang")
+            ref_id = selected[0]["id"]
+            selected = selected[0]["name"]
+            ###
+            if cmd == "3":
+                print("TODO Edit")
+            # Edit()
+            if cmd == "4":
+                print("TODO Remove")
+            # Remove()
+        else:
+            print("Incorrect command!")
+            position = 0
+            reference_id = 0
             return
 
-
-def print_langs():
-    print("Current Languages:")
-    langs_names = db.execute("SELECT name FROM langs;")
-    for lang in langs_names:
-        print(lang["name"])
+def print_elements(level):
+    print("Current elements:")
+    elements = db.execute("SELECT name FROM ?;", level)
+    for el in elements:
+        print(el["name"])
     print()
 
 def main():
-    #DEFAULT LANG IS ENG and has DEFCAT1 as its default category
-    # db = SQL("sqlite:///KeasalDB.db")
-    pos = "0"
-    guide(pos);
-    while pos != "-1":
-        pos = input("command: ")
-        guide(pos)
+    reference_id = 0
+    command = "0"
+    guide(command, reference_id);
+
+    while reference_id != "-1":
+        command = input("command: ")
+        print()
+        reference_id = guide(command, reference_id)
+        print(f"position: {position}")
         print()
 
 if __name__ == "__main__":
     main()
-
-
-#add new word:
-        # print("Input the word, its meaning and its category")
-        # word = list(map(str,input().strip().split()))[:2 * n]
-        # print(word)

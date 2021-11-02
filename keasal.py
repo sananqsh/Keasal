@@ -16,17 +16,18 @@ def guide(cmd, ref_id):
         print("2.About")
         return 0
     else:
-        cur_lvl = positions[position]       
+        cur_lvl = positions[position]
         if cmd == "1":
             if 0 < position:
-                new_id = fetch_id(cur_lvl, ref_id)
-                if new_id == -1:    # Exception
+                target_element = fetch_element(cur_lvl, ref_id)
+                if target_element[0] == False:    # Exception
+                    print(f"Such {cur_lvl} does not exist!")
                     return ref_id
-                ref_id = new_id
+                ref_id = target_element[0]["id"]
 
             position +=1
             cur_lvl = positions[position]
-            
+
             if position in range(1, 4):
                 print_elements(cur_lvl, ref_id)
 
@@ -45,11 +46,20 @@ def guide(cmd, ref_id):
                 if position == 0:
                     print_about()
                     return ref_id
-                add(cur_lvl, ref_id)
-            elif cmd == "3" or cmd == "4":
-                element_id = fetch_id(cur_lvl, ref_id, "edit or remove")
-                if element_id == -1:    # Exception
+
+                new_element = fetch_element(cur_lvl, ref_id, "add")
+                if new_element[0] != False:
+                    print("This element already exists!")
                     return ref_id
+                add(cur_lvl, ref_id, new_element[1])
+
+            elif cmd == "3" or cmd == "4":
+                target_element = fetch_element(cur_lvl, ref_id)
+                if target_element[0] == False:    # Exception
+                    print(f"Such {cur_lvl} does not exist!")
+                    return ref_id
+                element_id = target_element[0]["id"]
+
                 if cmd == "3":
                     edit(cur_lvl, element_id)
                 if cmd == "4":
@@ -67,28 +77,14 @@ def guide(cmd, ref_id):
             return ref_id
 
 # TODO: handle repeated categories
-def add(level, reference):
-    new_name = input(f"Name for the new {level}: ")
+def add(level, reference, new_name):
     if level == "language":
         db.execute("INSERT INTO language (name) VALUES (?)", new_name)
     elif level == "category":
-        if is_repeated(new_name, level, reference):
-            return
         db.execute("INSERT INTO category (name, language_id) VALUES (?,?)", new_name, reference)
     elif level == "word":
-        if is_repeated(new_name, level, reference):
-            return
         meaning = input("Meaning for the new word: ")
         db.execute("INSERT INTO word (name, meaning, category_id) VALUES (?, ?, ?)", new_name, meaning, reference)
-
-def is_repeated(new_name, level, reference):
-    if level == "category":
-        repetition = db.execute("SELECT * FROM ? WHERE language_id=? AND name=?",level, reference , new_name)
-    else:
-        repetition = db.execute("SELECT * FROM ? WHERE category_id=? AND name=?",level, reference , new_name)
-    if len(repetition) != 0:
-        print(f"This {level} already exists!")
-        return
 
 def edit(level, element_id):
     # print(level + str(element_id))
@@ -104,7 +100,7 @@ def edit(level, element_id):
         db.execute("UPDATE ? SET name=? where id=?;", level, updated_name, element_id)
 
 def remove(level, element_id):
-    db.execute("DELETE FROM ? where id = ?;", level, element_id)    
+    db.execute("DELETE FROM ? where id = ?;", level, element_id)
 
 def print_elements(level, reference):
     print("Current elements: { ")
@@ -124,19 +120,21 @@ def print_elements(level, reference):
             print(el["name"])
 
     print("}")
-    
-def fetch_id(level, reference, prompt="access"):
-    if level == "language":
-        selected = db.execute("SELECT * FROM ? WHERE name = ?", level, input(f"Input the {level} you want to {prompt}: "))
-    elif level == "category":
-        selected = db.execute("SELECT * FROM ? WHERE language_id = ? AND name = ?", level, reference, input(f"Input the {level} you want to {prompt}: "))
+
+def fetch_element(level, reference, prompt="access"):
+    target = input(f"Input the {level} you want to {prompt}: ")
+
+    if level == "category":
+        selected = db.execute("SELECT * FROM ? WHERE language_id = ? AND name = ?", level, reference, target)
     else:
-        selected = db.execute("SELECT * FROM ? WHERE category_id = ? AND name = ?", level, reference, input(f"Input the {level} you want to {prompt}: "))
+        # languages and words must be unique (even if the words have different sources)
+        selected = db.execute("SELECT * FROM ? WHERE name = ?", level, target)
 
     if len(selected) == 0:
-        print(f"Such {level} does not exist!")
-        return -1
-    return selected[0]["id"]
+        # such element does not exist
+        return [False, target]
+    print(selected[0]["name"])
+    return selected
 
 def print_about():
     print("This program helps expand your vocabulary when learning a new language")

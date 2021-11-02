@@ -50,7 +50,7 @@ def guide(cmd, ref_id):
             return ref_id
         elif cmd == "2":
             print("TODO ADD")
-            # add(cur_lvl, ref_id)
+            add(cur_lvl, ref_id)
         elif cmd == "3" or cmd == "4":
             element_id = fetch_id(cur_lvl, "edit or remove")
 
@@ -58,7 +58,6 @@ def guide(cmd, ref_id):
                 print("TODO Edit")
                 # edit(cur_lvl, ref_id)
             if cmd == "4":
-                # print("TODO Remove")
                 remove(cur_lvl, element_id)
         else:
             print("Incorrect command!")
@@ -68,15 +67,22 @@ def guide(cmd, ref_id):
 
 
 def add(level, reference):
+    print("$")
+    print(level)
+    new_name = input(f"Name for the new {level}: ")
     if level == "language":
-        db.execute("INSERT INTO language (name) VALUES (?)", input("Name for the new language:"))
-    # if level == ""
+        db.execute("INSERT INTO language (name) VALUES (?)", new_name)
+    elif level == "category":
+        db.execute("INSERT INTO category (name, language_id) VALUES (?,?)", new_name, reference)
+    elif level == "word":
+        meaning = input("Meaning for the new word: ")
+        db.execute("INSERT INTO word (name, meaning, category_id) VALUES (?, ?, ?)", new_name, meaning, reference)
+    print("$$$")
 
 def remove(level, element_id):
     db.execute("DELETE FROM ? where id = ?", level, element_id)
 
 def print_elements(level, reference):
-    print(level)
     print("Current elements:")
 
     if level == "word":
@@ -115,7 +121,7 @@ if __name__ == "__main__":
     main()
 
 
-#add new word:
+#!!!a different approach to add new word:
         # print("Input the word, its meaning and its category")
         # word = list(map(str,input().strip().split()))[:2 * n]
         # print(word)

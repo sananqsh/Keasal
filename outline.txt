@@ -1,10 +1,12 @@
 Phase 1:
--Create SQL structure (with default lang and category)
--Simple inputting
--Debugging
++Create SQL structure (with default lang and category and words)                            *checked
+-Simple inputting                                                                           *checked
+-Debugging                                                                                  *checked
 Phase 2:
--Personalization in Languages and Categories (Adding, Edditing, Removing, etc.)
+-Personalization in Languages and Categories and Words(Adding, Edditing, Removing, etc.)    *checked
 -Debugging
+    * fix this bug: user can edit an element`s name to another already existing element, leaving repetition problem behind
+    * fix this bug: if user add repeated words, the program crashes                         *checked
 Phase 3:
 -Generate tests
 -Debugging

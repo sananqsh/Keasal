@@ -9,9 +9,9 @@ positions = ["main", "language", "category", "word"]
 def guide(cmd, ref_id):
     # TODO: (1.Show word) option in word level
     # TODO: Handle exceptions: pos=0 & cmd > 2 || (pos in {1,2} & cmd > 4) || (pos == 3 & cmd in {1, 5, 6, ...})
-    
-    global position
 
+    global position
+    # print(f"ref_id: {ref_id}")
     if cmd == "0":
         ref_id = 0
         position = 0
@@ -21,7 +21,7 @@ def guide(cmd, ref_id):
         return 0
     else:
         # print(f"position: {position}")
-        cur_lvl = positions[position]       
+        cur_lvl = positions[position]
         if cmd == "1":
             if 0 < position:
                 new_id = fetch_id(cur_lvl)
@@ -29,11 +29,14 @@ def guide(cmd, ref_id):
                     # Exception
                     return
                 ref_id = new_id
+
             position +=1
             cur_lvl = positions[position]
-            if 0 < position:
-                print_elements(cur_lvl)
 
+            if position in range(1, 4):
+                print_elements(cur_lvl, ref_id)
+
+            print(f"ref_id: {ref_id}")
             if position < 3:
                 next_lvl = positions[position+1]
 
@@ -46,7 +49,7 @@ def guide(cmd, ref_id):
 
             return ref_id
         elif cmd == "2":
-            # print("TODO ADD")
+            print("TODO ADD")
             # add(cur_lvl, ref_id)
         elif cmd == "3" or cmd == "4":
             ###
@@ -71,11 +74,23 @@ def add(level, reference):
     # if level == ""
 
 
-def print_elements(level):
+def print_elements(level, reference):
+    print(level)
     print("Current elements:")
-    elements = db.execute("SELECT name FROM ?;", level)
-    for el in elements:
-        print(el["name"])
+
+    if level == "word":
+        elements = db.execute("SELECT * FROM ? WHERE category_id = ?;", level, reference)
+        for el in elements:
+            print(el["name"], end=": ")
+            print(el["meaning"])
+    else:
+        if level == "language":
+            elements = db.execute("SELECT name FROM ?;", level)
+        elif level == "category":
+            elements = db.execute("SELECT name FROM ? WHERE language_id = ?;", level, reference)
+
+        for el in elements:
+            print(el["name"])
 
 def fetch_id(level):
     selected = db.execute("SELECT * FROM ? WHERE name = ?", level, input(f"Input the {level} you want to access: "))

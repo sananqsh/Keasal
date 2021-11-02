@@ -52,15 +52,14 @@ def guide(cmd, ref_id):
             print("TODO ADD")
             # add(cur_lvl, ref_id)
         elif cmd == "3" or cmd == "4":
-            ###
-            ## ref_id = fetch_id(cur_lvl)
-            ###
+            element_id = fetch_id(cur_lvl, "edit or remove")
+
             if cmd == "3":
                 print("TODO Edit")
-            # edit(cur_lvl, ref_id)
+                # edit(cur_lvl, ref_id)
             if cmd == "4":
-                print("TODO Remove")
-            # remove(cur_lvl, ref_id)
+                # print("TODO Remove")
+                remove(cur_lvl, element_id)
         else:
             print("Incorrect command!")
             position = 0
@@ -73,6 +72,8 @@ def add(level, reference):
         db.execute("INSERT INTO language (name) VALUES (?)", input("Name for the new language:"))
     # if level == ""
 
+def remove(level, element_id):
+    db.execute("DELETE FROM ? where id = ?", level, element_id)
 
 def print_elements(level, reference):
     print(level)
@@ -92,8 +93,8 @@ def print_elements(level, reference):
         for el in elements:
             print(el["name"])
 
-def fetch_id(level):
-    selected = db.execute("SELECT * FROM ? WHERE name = ?", level, input(f"Input the {level} you want to access: "))
+def fetch_id(level, prompt="access"):
+    selected = db.execute("SELECT * FROM ? WHERE name = ?", level, input(f"Input the {level} you want to {prompt}: "))
     if len(selected) == 0:
         print(f"Such {level} does not exist in the database!")
         return -1

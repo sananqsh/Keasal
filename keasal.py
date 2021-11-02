@@ -1,5 +1,6 @@
-# import unicodedata
 from cs50 import SQL
+
+db = SQL("sqlite:///KeasalDB.db")
 
 def print_help(position):
     if position == "main":
@@ -13,9 +14,16 @@ def print_help(position):
 
     print("Please enter your command")
 
+def print_langs():
+    print("Current Languages:")
+    langs_names = db.execute("SELECT name FROM langs;")
+    for lang in langs_names:
+        print(lang["name"])
+    print()
+
 def main():
     #DEFAULT LANG IS ENG and has DEFCAT1 as its default category
-    db = SQL("sqlite:///KeasalDB.db")
+    # db = SQL("sqlite:///KeasalDB.db")
     position = "main"
     print_help(position);
 
@@ -26,7 +34,7 @@ def main():
             position = "main"
         elif cmd == "1":
             position = "lang"
-            print_all_langs()
+            print_langs()
             print_help(position)
         elif cmd == "11":
             #TODO

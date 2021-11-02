@@ -1,0 +1,16 @@
+Phase 1:
+-Create SQL structure (with default lang and category)
+-Simple inputting
+-Debugging
+Phase 2:
+-Personalization in Languages and Categories (Adding, Edditing, Removing, etc.)
+-Debugging
+Phase 3:
+-Generate tests
+-Debugging
+Phase 4:
+-Remember test results and conclude user`s dominance on each word
+-Debugging
+Phase 5:
+-Add GUI
+-Debugging

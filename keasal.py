@@ -6,17 +6,24 @@ position = 0
 
 positions = ["database", "language", "category", "word"]
 
-def guide(cmd, ref_id):
+def keasalpy(cmd, ref_id):
     global position
+
+    if not is_valid_command(cmd):
+        print("Bad command!")
+        return ref_id
+
+    print(f"cmd: {cmd} || ref_id: {ref_id}")
+
     if cmd == "0":
         position = 0
         next_lvl = positions[position+1]
-        print(f"1.Manage in {next_lvl} level")
-        print("2.About")
+        print(f"1.Manage in {next_lvl} level")  # TODO: add this line to guide()
+        print("2.About")                        # TODO: add this line to guide()
         return 0
     else:
-        cur_lvl = positions[position]       
-        if cmd == "1":
+        cur_lvl = positions[position]
+        if position in range(0, 3) and cmd == "1":
             if 0 < position:
                 target_element = fetch_element(ref_id)
                 if target_element[0] == False:    # Exception
@@ -26,10 +33,11 @@ def guide(cmd, ref_id):
 
             position +=1
             cur_lvl = positions[position]
-            
-            if position in range(1, 4):
-                print_elements(cur_lvl, ref_id)
 
+            if position in range(1, 4):
+                print_elements(ref_id)
+
+            # TODO: put next 16 lines in a function named "guide"
             print("0.Go to main")
             if position in {1, 2}:
                 next_lvl = positions[position+1]
@@ -38,6 +46,7 @@ def guide(cmd, ref_id):
             print(f"2.Add new {cur_lvl}")
             print(f"3.Edit {cur_lvl}")
             print(f"4.Remove {cur_lvl}")
+
             #NEW
             if position == 2:
                 print(f"5.Show all words in this {cur_lvl}")
@@ -45,7 +54,9 @@ def guide(cmd, ref_id):
                 print(f"6.Take a peek at words")
                 print(f"7.Take test")
             return ref_id
-        elif cmd == "2":
+            #####################################################
+
+        if cmd == "2":
             if position == 0:
                 print_about()
                 return ref_id
@@ -56,7 +67,7 @@ def guide(cmd, ref_id):
                 return ref_id
             add(ref_id, new_element[1])
 
-        elif cmd == "3" or cmd == "4":
+        elif 0 < position and (cmd == "3" or cmd == "4"):
             target_element = fetch_element(ref_id, "edit or remove")
             if target_element[0] == False:    # Exception
                 print(f"Such {cur_lvl} does not exist!")
@@ -68,7 +79,7 @@ def guide(cmd, ref_id):
             if cmd == "4":
                 remove(element_id)
 
-        elif cmd in {"5", "6", "7"} :
+        elif position in {2, 3} and  cmd in {"5", "6", "7"} :
             if cmd in {"5", "6"}:
                 represent_lang_words(cmd, ref_id)
             else:
@@ -85,9 +96,39 @@ def guide(cmd, ref_id):
 
         return ref_id
 
+def is_valid_command(cmd):
+    if cmd in {"0", "2"}:
+        return True
+
+    if cmd == "1":
+        if position in range(0, 3):
+            return True
+        else:
+            return False
+
+    if cmd in {"3", "4"}:
+        if position in range(1, 4):
+            return True
+        else:
+            return False
+
+    if cmd == "5":
+        if position == 2:
+            return True
+        else:
+            return False
+
+    if cmd in {"6", "7"}:
+        if position in {2, 3}:
+            return True
+        else:
+            return False
+
+    else:
+        return False
+
 def represent_lang_words(cmd, reference):
     level = positions[position]
-    print(f"cmd: {cmd} $ level: {level} $ reference: {reference}")
     # level is either category or word
     if level == "category":
         words = db.execute("SELECT * FROM word WHERE category_id IN (SELECT id FROM category WHERE language_id=?)", reference)  #haven`t been tested
@@ -133,9 +174,10 @@ def edit(element_id):
 
 def remove(element_id):
     level = positions[position]
-    db.execute("DELETE FROM ? where id = ?;", level, element_id)    
+    db.execute("DELETE FROM ? where id = ?;", level, element_id)
 
 def print_elements(reference):
+    level = positions[position]
     print("Current elements: { ")
 
     if level == "word":
@@ -153,23 +195,24 @@ def print_elements(reference):
             print(el["name"])
 
     print("}")
-    
-def fetch_element(reference, prompt="access"):
-    target = input(f"Input the {level} you want to {prompt}: ")
 
-    if level == "category":
-        print(f"level: {level}")
-        print(f"reference: {reference}")
+def fetch_element(reference, prompt="access"):
+    level = positions[position]
+    target = input(f"Input the name of the {level} you want to {prompt}: ")
+
+    if level == "language":
+        selected = db.execute("SELECT * FROM ? WHERE name = ?", level, target)
+    else:
+        # print(f"level: {level}")
+        # print(f"reference: {reference}")
         # print(target)
         selected = db.execute("SELECT * FROM category WHERE language_id = ? AND name = ?", reference, target)
-    else:
-        # languages and words must be unique (even if the words have different sources) 
-        selected = db.execute("SELECT * FROM ? WHERE name = ?", level, target)
-    
+
+
     if len(selected) == 0:
         # such element does not exist
         return [False, target]
-    print(selected[0]["name"])
+    # print(selected[0]["name"])
     return selected
 
 def print_about():
@@ -178,15 +221,16 @@ def print_about():
     print("That`s right! you can store words in different languages and have them categorized!")
     print("The name of this project is 'Keasal', a Kurdish word meaning 'turtle',")
     print("which is a symbol of wisdom and patience. May you enjoy your journey ;)")
-    print("!)Pay attention to the prompts and follow them")
-    print("0.Go to main")
+    print("     !)Pay attention to the prompts and follow them")
+    print("     0.Go to main")
+    print("  exit.To stop the program")
 
 def main():
     reference_id = 0
     command = "0"
     while command != "exit":
-        reference_id = guide(command, reference_id)
-        print("________________________")
+        reference_id = keasalpy(command, reference_id)
+        print(f"____________{position}_______________")     # TODO: add this line to guide()
         command = input("command: ")
         print()
 

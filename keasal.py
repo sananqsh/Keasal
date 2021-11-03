@@ -15,7 +15,7 @@ def guide(cmd, ref_id):
         print("2.About")
         return 0
     else:
-        cur_lvl = positions[position]       
+        cur_lvl = positions[position]
         if cmd == "1":
             if 0 < position:
                 target_element = fetch_element(cur_lvl, ref_id)
@@ -26,7 +26,7 @@ def guide(cmd, ref_id):
 
             position +=1
             cur_lvl = positions[position]
-            
+
             if position in range(1, 4):
                 print_elements(cur_lvl, ref_id)
 
@@ -39,9 +39,9 @@ def guide(cmd, ref_id):
             print(f"3.Edit {cur_lvl}")
             print(f"4.Remove {cur_lvl}")
             #NEW
-            if position in 1:
+            if position == 2:
                 print(f"5.Show all words in this {cur_lvl}")
-            if position in {1, 2}:
+            if position in {2, 3}:
                 print(f"6.Take a peek at words")
                 print(f"7.Take test")
 
@@ -59,7 +59,7 @@ def guide(cmd, ref_id):
             add(cur_lvl, ref_id, new_element[1])
 
         elif cmd == "3" or cmd == "4":
-            target_element = fetch_element(cur_lvl, ref_id)
+            target_element = fetch_element(cur_lvl, ref_id, "edit or remove")
             if target_element[0] == False:    # Exception
                 print(f"Such {cur_lvl} does not exist!")
                 return ref_id
@@ -72,23 +72,7 @@ def guide(cmd, ref_id):
 
         elif cmd in {"5", "6", "7"} :
             if cmd in {"5", "6"}:
-                if cur_lvl == "language":
-                    words = db.execute("SELECT * FROM word WHERE category_id IN (SELECT id FROM category WHERE language_id=?)", ref_id)  #haven`t been tested
-                    
-                    for word in words:
-                        print(word["name"], end=": ")
-                        if cmd == "6":
-                            input()
-                        print(word["meaning"])
-
-                else:
-                    words = db.execute("SELECT * FROM word WHERE category_id=?", ref_id)
-                    for word in words:
-                        print(word["name"], end=": ")
-                        if cmd == "6":
-                            input()
-                        print(word["meaning"])
-                        
+                represent_lang_words(cmd, cur_lvl, ref_id)
             else:
                 print("TODO: test!")
 
@@ -96,16 +80,36 @@ def guide(cmd, ref_id):
             print("Incorrect command!")
             return ref_id
 
-        if position != 0:
+        # print(f"cmd: {cmd}; position: {position}")
+        if position != 0 and int(cmd) in range(0, 5):
             print_elements(cur_lvl, ref_id)
 
-            return ref_id
+        return ref_id
 
-# TODO: handle repeated categories
+def represent_lang_words(cmd, level, reference):
+    print(f"cmd: {cmd} $ level: {level} $ reference: {reference}")
+    # level is either category or word
+    if level == "category":
+        words = db.execute("SELECT * FROM word WHERE category_id IN (SELECT id FROM category WHERE language_id=?)", reference)  #haven`t been tested
+        for word in words:
+            print(word["name"], end=": ")
+            if cmd == "6":
+                input()
+            print(word["meaning"])
+
+    else:
+        words = db.execute("SELECT * FROM word WHERE category_id=?", reference)
+        for word in words:
+            print(word["name"], end=": ")
+            if cmd == "6":
+                input()
+            print(word["meaning"])
+
 def add(level, reference, new_name):
     if level == "language":
         db.execute("INSERT INTO language (name) VALUES (?)", new_name)
     elif level == "category":
+        print("adding category")
         db.execute("INSERT INTO category (name, language_id) VALUES (?,?)", new_name, reference)
     elif level == "word":
         meaning = input("Meaning for the new word: ")
@@ -117,15 +121,16 @@ def edit(level, element_id):
         editting_col = input("What do you want to edit in this element(only name or meaning)? ")
         if editting_col not in {"name","meaning"}:
             print(f"Such attribute does not exist in a {level}")
-        new_value = input(f"Enter the new {editting_col}: ")
-
+        new_value = input(f"Enter the new {editting_col}(Enter 'cancel' to cancel this operation): ")
+        if new_value == "cancel":
+            return
         db.execute("UPDATE ? SET ?=? where id=?;", level, editting_col, new_value, element_id)
     else:
         updated_name = input(f"new name for this {level}: ")
         db.execute("UPDATE ? SET name=? where id=?;", level, updated_name, element_id)
 
 def remove(level, element_id):
-    db.execute("DELETE FROM ? where id = ?;", level, element_id)    
+    db.execute("DELETE FROM ? where id = ?;", level, element_id)
 
 def print_elements(level, reference):
     print("Current elements: { ")
@@ -145,16 +150,19 @@ def print_elements(level, reference):
             print(el["name"])
 
     print("}")
-    
+
 def fetch_element(level, reference, prompt="access"):
     target = input(f"Input the {level} you want to {prompt}: ")
 
     if level == "category":
-        selected = db.execute("SELECT * FROM ? WHERE language_id = ? AND name = ?", level, reference, target)
+        print(f"level: {level}")
+        print(f"reference: {reference}")
+        # print(target)
+        selected = db.execute("SELECT * FROM category WHERE language_id = ? AND name = ?", reference, target)
     else:
-        # languages and words must be unique (even if the words have different sources) 
+        # languages and words must be unique (even if the words have different sources)
         selected = db.execute("SELECT * FROM ? WHERE name = ?", level, target)
-    
+
     if len(selected) == 0:
         # such element does not exist
         return [False, target]
@@ -167,6 +175,8 @@ def print_about():
     print("That`s right! you can store words in different languages and have them categorized!")
     print("The name of this project is 'Keasal', a Kurdish word meaning 'turtle',")
     print("which is a symbol of wisdom and patience. May you enjoy your journey ;)")
+    print("!)Pay attention to the prompts and follow them")
+    print("0.Go to main")
 
 def main():
     reference_id = 0

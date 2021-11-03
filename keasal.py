@@ -6,6 +6,8 @@ position = 0
 
 positions = ["database", "language", "category", "word"]
 
+DEFAULT_UNDERLINES = 15
+
 def keasalpy(cmd, ref_id):
     global position
 
@@ -13,18 +15,18 @@ def keasalpy(cmd, ref_id):
         print("Bad command!")
         return ref_id
 
-    # print(f"cmd: {cmd} || ref_id: {ref_id}")
+    print(f"cmd: {cmd} || ref_id: {ref_id}")
 
     if cmd == "0":
         position = 0
+        ref_id = 0
+        guide(ref_id)
 
-        guide()
-        
-        return 0
+    cur_lvl = positions[position]
 
-    cur_lvl = positions[position]       
-    
     if cmd == "1":
+        prev_ref = ref_id
+
         if 0 < position:
             target_element = fetch_element(ref_id)
             if target_element[0] == False:    # Exception
@@ -34,12 +36,12 @@ def keasalpy(cmd, ref_id):
 
         position +=1
         cur_lvl = positions[position]   # Is this line necessary?
-        
-        if position in range(1, 4):
-            print_elements(ref_id)
+        # guide(prev_ref)
+        guide(ref_id)
 
-        guide()
-    
+        # if position in range(1, 4):
+        #     print_elements(ref_id)
+
     elif cmd == "2":
         if position == 0:
             print_about()
@@ -71,10 +73,6 @@ def keasalpy(cmd, ref_id):
 
         return ref_id
 
-    else:
-        print("Incorrect command!")
-        return ref_id
-
     # print(f"cmd: {cmd}; position: {position}")
     if cmd in {"2", "3", "4"}:
         print_elements(ref_id)
@@ -83,8 +81,27 @@ def keasalpy(cmd, ref_id):
 
 
 
-def guide():
+def guide(reference):
+    prev_level = positions[position-1]       #TODO: fix level problems
     level = positions[position]
+
+    print(f"lvl: {level}")
+
+    # header = "WHAAT!?"     # By default
+    if reference == 0:
+        if position == 0:
+            header = "Keasal"
+        if position == 1:
+            header = "Your Languages"
+
+    else:
+        element = db.execute("SELECT * FROM ? WHERE id=?", prev_level, reference)
+        header = element[0]["name"]
+
+    generate_borderline(header, DEFAULT_UNDERLINES)
+
+    if position in range(1, 4):
+       print_elements(reference)
 
     # 0-command also works anywhere but it`s more user friendly not to
     # prompt it in position=0
@@ -96,25 +113,39 @@ def guide():
         print(f"1.Manage in {next_level} level")
 
     if position == 0:
-        print("2.About") 
+        print("2.About")
     else:
         print(f"2.Add new {level}")
         print(f"3.Edit {level}")
         print(f"4.Remove {level}")
 
     if position == 2:
-        print(f"5.Show all words in this {level}") 
+        print(f"5.Show all words in this {level}")
 
-    if 1 < position: 
+    if 1 < position:
         print(f"6.Take a peek at words")
         print(f"7.Take test")
 
     print("exit.To stop the program")
 
-def is_valid_command(cmd):    
+    generate_borderline(position, DEFAULT_UNDERLINES)
+
+
+def generate_borderline(title, n):
+    for x in range(0,n):
+        print("_", end="")
+
+    print(title, end="")
+
+    for x in range(0,n):
+        print("_", end="")
+
+    print()
+
+def is_valid_command(cmd):
     if cmd in {"0", "2"}:
         return True
-    
+
     if cmd == "1":
         if position in range(0, 3):
             return True
@@ -137,7 +168,7 @@ def is_valid_command(cmd):
         if position in {2, 3}:
             return True
         else:
-            return False            
+            return False
 
     else:
         return False
@@ -189,7 +220,7 @@ def edit(element_id):
 
 def remove(element_id):
     level = positions[position]
-    db.execute("DELETE FROM ? where id = ?;", level, element_id)    
+    db.execute("DELETE FROM ? where id = ?;", level, element_id)
 
 def print_elements(reference):
     level = positions[position]
@@ -210,7 +241,7 @@ def print_elements(reference):
             print(el["name"])
 
     print("}")
-    
+
 def fetch_element(reference, prompt="access"):
     level = positions[position]
     target = input(f"Input the name of the {level} you want to {prompt}: ")
@@ -222,8 +253,8 @@ def fetch_element(reference, prompt="access"):
         # print(f"reference: {reference}")
         # print(target)
         selected = db.execute("SELECT * FROM category WHERE language_id = ? AND name = ?", reference, target)
-        
-    
+
+
     if len(selected) == 0:
         # such element does not exist
         return [False, target]
@@ -237,14 +268,13 @@ def print_about():
     print("The name of this project is 'Keasal', a Kurdish word meaning 'turtle',")
     print("which is a symbol of wisdom and patience. May you enjoy your journey ;)")
     print("     !)Pay attention to the prompts and follow them")
-   
+
 
 def main():
     reference_id = 0
     command = "0"
     while command != "exit":
         reference_id = keasalpy(command, reference_id)
-        print(f"____________{position}_______________")     # TODO: add this line to guide()
         command = input("command: ")
         print()
 

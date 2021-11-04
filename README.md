@@ -14,7 +14,7 @@ May you enjoy your journey ;)
 #### Goals and design descisions in different phases of the project are stated in *outline.txt*
 #### To have a visual understanding of SQL tables check *schema.PNG*
 #### *KeasalDB.db* stores the data
-#### and  the main code is contained by *Keasal.py*
+#### and  the main code is contained in *Keasal.py*
 #
 *You can add and store similar words in different languages and categories but while taking test in the related section, your answer must match the meaning in THAT word in THAT section.*
 

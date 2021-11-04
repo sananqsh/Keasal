@@ -35,12 +35,10 @@ def keasalpy(cmd, ref_id):
         prev_ref = ref_id
 
         if 0 < position:
-            # target_element = fetch_element(ref_id)
             entry = take_entry(ref_id)
             if entry == CANCEL_PROMPT:
                 print(CANCEL_PROMPT)
                 return ref_id
-            # if target_element[0] == False:    # Exception
 
             target_element = fetch_element(entry, ref_id)
 
@@ -51,21 +49,10 @@ def keasalpy(cmd, ref_id):
             ref_id = target_element["id"]
 
         position +=1
-        # cur_lvl = positions[position]   # Is this line necessary?
-        # guide(prev_ref)
         guide(ref_id)
 
-        # if position in range(1, 4):
-        #     print_elements(ref_id)
 
     elif cmd == "2":
-        # new_element = fetch_element(ref_id, "add")
-        # if new_element == CANCEL_PROMPT:
-        #     print(new_element)
-        #     return ref_id
-        # if new_element[0] != False:
-        #     print("This element already exists!")
-        #     return ref_id
         new_element = take_entry(ref_id, "add")
         if new_element == CANCEL_PROMPT:
             print(CANCEL_PROMPT)
@@ -96,10 +83,7 @@ def keasalpy(cmd, ref_id):
             remove(element_id)
 
     elif cmd in {"5", "6", "7"} :
-        if cmd in {"5", "6"}:
-            represent_lang_words(cmd, ref_id)
-        else:
-            print("TODO: test!")
+        represent_lang_words(cmd, ref_id)
 
         return ref_id
 
@@ -147,13 +131,6 @@ def guide(reference):
     if position < 3:
         next_level = positions[position+1]
         print(f"1.Manage in {next_level} level")
-
-    # if position == 0:
-    #     print("2.About")
-    # else:
-        # print(f"2.Add new {level}")
-        # print(f"3.Edit {level}")
-        # print(f"4.Remove {level}")
 
     if 0 < position:
         print(f"2.Add new {level}")
@@ -224,18 +201,20 @@ def is_valid_command(cmd):
 def represent_lang_words(cmd, reference):
     level = positions[position]
     # level is either category or word
-    if level == "category":
-        words = db.execute("SELECT * FROM word WHERE category_id IN (SELECT id FROM category WHERE language_id=?)", reference)
-        for word in words:
-            print(word["name"], end=": ")
-            if cmd == "6":
-                input()
-            print(word["meaning"])
-
-    else:
+    if level == "language":
         words = db.execute("SELECT * FROM word WHERE category_id=?", reference)
-        for word in words:
-            print(word["name"], end=": ")
+    else:
+        words = db.execute("SELECT * FROM word WHERE category_id IN (SELECT id FROM category WHERE language_id=?)", reference)
+
+    for word in words:
+        print(word["name"], end=": ")
+
+        if cmd == "7":
+            answer = input()
+            if answer != word["meaning"]:
+                print("Correct answer: " + word["meaning"])
+
+        else:
             if cmd == "6":
                 input()
             print(word["meaning"])

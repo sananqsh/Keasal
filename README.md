@@ -1,5 +1,5 @@
 # Keasal:turtle:
-## A handy program for anyone who is learning a new language!
+## Handy for anyone learning a new language!
 
 This program helps expand your vocabulary when learning a new language
 

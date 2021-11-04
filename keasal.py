@@ -140,7 +140,7 @@ def guide(reference):
         print(f"5.Show all words in this {level}")
 
     if 1 < position:
-        print(f"6.Take a peek at words")
+        print(f"6.Peek at words")
         print(f"7.Take test")
 
     print("exit.To stop the program")

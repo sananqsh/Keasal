@@ -17,7 +17,8 @@ def keasalpy(cmd, ref_id):
         print("Bad command!")
         return ref_id
 
-    print(f"cmd: {cmd} || ref_id: {ref_id}")
+    # Uncomment to debug
+    # print(f"cmd: {cmd} || ref_id: {ref_id}")
 
     if cmd == "00":
         position = 0
@@ -29,8 +30,8 @@ def keasalpy(cmd, ref_id):
         ref_id = 0
         guide(ref_id)
 
-    cur_lvl = positions[position]
-
+    cur_lvl = positions[position]       
+    
     if cmd == "1":
         prev_ref = ref_id
 
@@ -51,13 +52,13 @@ def keasalpy(cmd, ref_id):
         position +=1
         guide(ref_id)
 
-
+    
     elif cmd == "2":
         new_element = take_entry(ref_id, "add")
         if new_element == CANCEL_PROMPT:
             print(CANCEL_PROMPT)
             return ref_id
-        if cur_lvl == "language" and already_exists(new_element):
+        if cur_lvl != "category" and already_exists(new_element, ref_id):
             print(f"This {cur_lvl} already exists!")
             return ref_id
 
@@ -70,7 +71,7 @@ def keasalpy(cmd, ref_id):
             return ref_id
 
         target_element = fetch_element(entry, ref_id)
-
+        
         if target_element == False:    # Exception
             print(f"Such {cur_lvl} does not exist!")
             return ref_id
@@ -84,7 +85,9 @@ def keasalpy(cmd, ref_id):
 
     elif cmd in {"5", "6", "7"} :
         represent_lang_words(cmd, ref_id)
-
+        return ref_id
+    elif cmd == "help":
+        guide(ref_id)
         return ref_id
 
     # print(f"cmd: {cmd}; position: {position}")
@@ -119,7 +122,7 @@ def guide(reference):
         print_about()
 
     ### PROPMTS
-
+   
     if position == 1:
         print("00.About")
 
@@ -138,9 +141,9 @@ def guide(reference):
         print(f"4.Remove {level}")
 
     if position == 2:
-        print(f"5.Show all words in this {level}")
+        print(f"5.Show all words in this {level}") 
 
-    if 1 < position:
+    if 1 < position: 
         print(f"6.Take a peek at words")
         print(f"7.Take test")
 
@@ -150,12 +153,12 @@ def guide(reference):
 
 def generate_borderline(title, n):
     edge_size = n - len(str(title))//2
-
+    
     for x in range(0, edge_size):
         print("_", end="")
 
     print(title, end="")
-
+    
     for x in range(0, edge_size):
         print("_", end="")
 
@@ -164,9 +167,12 @@ def generate_borderline(title, n):
 def cancelling(text):
     if text == "cancel":
         return True
-    return False
+    return False    
 
 def is_valid_command(cmd):
+    if cmd == "help":
+        return True
+
     if cmd == "00":
         if position in [0, 1]:
             return True
@@ -174,7 +180,7 @@ def is_valid_command(cmd):
 
     if cmd in {"0", "2"}:
         return True
-
+    
     if cmd == "1":
         if position in range(0, 3):
             return True
@@ -193,7 +199,7 @@ def is_valid_command(cmd):
     if cmd in {"6", "7"}:
         if position in {2, 3}:
             return True
-        return False
+        return False            
 
     else:
         return False
@@ -201,19 +207,19 @@ def is_valid_command(cmd):
 def represent_lang_words(cmd, reference):
     level = positions[position]
     # level is either category or word
-    if level == "language":
-        words = db.execute("SELECT * FROM word WHERE category_id=?", reference)
-    else:
+    if level == "category":
         words = db.execute("SELECT * FROM word WHERE category_id IN (SELECT id FROM category WHERE language_id=?)", reference)
+    else:
+        words = db.execute("SELECT * FROM word WHERE category_id=?", reference)        
 
     for word in words:
         print(word["name"], end=": ")
-
+        
         if cmd == "7":
             answer = input()
             if answer != word["meaning"]:
                 print("Correct answer: " + word["meaning"])
-
+        
         else:
             if cmd == "6":
                 input()
@@ -266,24 +272,20 @@ def edit(element_id):
 
 def remove(element_id):
     level = positions[position]
-    db.execute("DELETE FROM ? where id = ?;", level, element_id)
+    db.execute("DELETE FROM ? where id = ?;", level, element_id)    
 
 def fetch_element(target, reference): #, prompt="access"):
-    # level = positions[position]
-    # target = input(f"The name of the {level} you want to {prompt}(Enter 'cancel' to cancel this operation): ")
-    # if cancelling(target):
-    #     return CANCEL_PROMPT
     result = already_exists(target, reference)
     if not result:
         # such element does not exist
         return False
-
+    
     print(result)
     return result
 
 def already_exists(name, reference=0):
     level = positions[position]
-
+    
     if level == "language":
         selected = db.execute("SELECT * FROM ? WHERE name = ?", level, name)
     elif level == "category":
@@ -329,8 +331,12 @@ def print_about():
     print("That`s right! you can store words in different languages and have them categorized!")
     print("The name of this project is 'Keasal', a Kurdish word meaning 'turtle',")
     print("which is a symbol of wisdom and patience. May you enjoy your journey ;)")
+    print("!!!)You can add and store similar words in different languages and categories") 
+    print("     but while taking test in the related section, your answer must match the ")
+    print("     meaning in THAT word in THAT section")
+
     print("!)Pay attention to the prompts and follow them")
-    print()
+    print("!)You can always enter 'help' to be prompted of available commands")   
 
 def main():
     reference_id = 0

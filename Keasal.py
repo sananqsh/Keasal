@@ -211,20 +211,19 @@ def represent_lang_words(cmd, reference):
 
     for word in words:
         if cmd == "7":
-            optimize_test(reference)
+            optimize_word_for_test(word)
             
             probability = word["probability_to_be_in_test"]
+
             if is_considered(probability):
                 print(word["name"], end=": ")
-                #dbg
-                print("yoooo")
-                #
+
                 answer = input()
                 if answer != word["meaning"]:
                     print("Correct answer: " + word["meaning"])
-                    db.execute("UPDATE word SET times_answered_wrong = times_tested + 1")
+                    db.execute("UPDATE word SET times_answered_wrong = times_tested + 1 WHERE id=?", word["id"])
 
-                db.execute("UPDATE word SET times_tested = times_tested + 1")
+                db.execute("UPDATE word SET times_tested = times_tested + 1 WHERE id=?", word["id"])
 
         else:
             print(word["name"], end=": ")
@@ -232,29 +231,25 @@ def represent_lang_words(cmd, reference):
             if cmd == "6":
                 input()
             print(word["meaning"])
-        # if cmd == "7":
-            # answer = input()
-            # if answer != word["meaning"]:
-            #     print("Correct answer: " + word["meaning"])
-            #     db.execute("UPDATE word SET times_answered_wrong = times_tested + 1")
 
-            # db.execute("UPDATE word SET times_tested = times_tested + 1")
-        
-        # else:
-            # if cmd == "6":
-            #     input()
-            # print(word["meaning"])
+def optimize_word_for_test(word):
+    if word["times_tested"] == 0:
+        ratio = 1
+    else:
+        ratio = word["times_answered_wrong"] / word["times_tested"]
 
-def optimize_test(reference):
-    words = db.execute("SELECT * FROM word WHERE category_id=?", reference)
+    if ratio == 0:
+        ratio = 0.05
 
-    for word in words:
-        if word["times_tested"] == 0:
-            ratio = 1
-        else:
-            ratio = word["times_answered_wrong"] / word["times_tested"]
+    print(f"ratio: {ratio}")
+    
+    db.execute("UPDATE word SET probability_to_be_in_test = ? WHERE id=?", ratio, word["id"])
+    
+    #
+    print("word probability_to_be_in_test in optimize_word_for_test(): ", end="")
+    print(word["probability_to_be_in_test"])
+    return
 
-        db.execute("UPDATE word SET probability_to_be_in_test = ?", ratio)
 
 def is_considered(probability):
     return random.random() < probability

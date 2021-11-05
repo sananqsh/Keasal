@@ -9,7 +9,7 @@
 - [x] Personalization in Languages and Categories and Words(Adding, Edditing, Removing, etc.)
 - [x] Debugging
     * fix this bug: edit an name to another already existing element, leaving repetition problem behind :heavy_check_mark:
-        * see if you can use fetch_id to recognize repetition after user input and before updating(done but regretted) :white_check_mark:
+        * see if you can use fetch_id to recognize repetition after user input and before updating(done but regretted) :white_circle:
         * no need for words to be unique, change this in sql :heavy_check_mark:
     * fix this bug: if user add repeated words, the program crashes :heavy_check_mark:
     * add a cancel option in the middle of operations :heavy_check_mark:

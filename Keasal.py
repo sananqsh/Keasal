@@ -117,7 +117,7 @@ def guide(reference):
         element = db.execute("SELECT * FROM ? WHERE id=?", prev_level, reference)
         header = element[0]["name"]
 
-    generate_borderline(header, DEFAULT_UNDERLINES)
+    generate_borderline(DEFAULT_UNDERLINES, header)
 
     if position in range(1, 4):
        print_elements(reference)
@@ -153,9 +153,10 @@ def guide(reference):
 
     print("exit.To stop the program")
 
-    generate_borderline(position, DEFAULT_UNDERLINES)
+    generate_borderline(DEFAULT_UNDERLINES)
 
-def generate_borderline(title, n):
+def generate_borderline(n, title=""):
+    print(len(title))
     edge_size = n - len(str(title))//2
     
     for x in range(0, edge_size):

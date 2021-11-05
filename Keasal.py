@@ -84,9 +84,14 @@ def keasalpy(cmd, ref_id):
         if cmd == "4":
             remove(element_id)
 
-    elif cmd in {"5", "6", "7"} :
+    elif cmd in {"5", "6"} :
         represent_lang_words(cmd, ref_id)
         return ref_id
+    
+    elif cmd == "7":
+        take_test(ref_id)
+        return ref_id
+    
     elif cmd == "help":
         guide(ref_id)
         return ref_id
@@ -201,6 +206,8 @@ def is_valid_command(cmd):
     else:
         return False
 
+
+# TODO: isolate cmd=="7" code from 5 and 6
 def represent_lang_words(cmd, reference):
     level = positions[position]
     # Level is either category or word
@@ -210,44 +217,61 @@ def represent_lang_words(cmd, reference):
         words = db.execute("SELECT * FROM word WHERE category_id=?", reference)        
 
     for word in words:
-        if cmd == "7":
-            optimize_word_for_test(word)
-            
-            probability = word["probability_to_be_in_test"]
+        print(word["name"], end=": ")
+    
+        if cmd == "6":
+            input()
+        print(word["meaning"])
 
-            if is_considered(probability):
-                print(word["name"], end=": ")
 
-                answer = input()
-                if answer != word["meaning"]:
-                    print("Correct answer: " + word["meaning"])
-                    db.execute("UPDATE word SET times_answered_wrong = times_tested + 1 WHERE id=?", word["id"])
+def take_test(reference):
+    optimize_test(reference)
 
-                db.execute("UPDATE word SET times_tested = times_tested + 1 WHERE id=?", word["id"])
-
-        else:
-            print(word["name"], end=": ")
-        
-            if cmd == "6":
-                input()
-            print(word["meaning"])
-
-def optimize_word_for_test(word):
-    if word["times_tested"] == 0:
-        ratio = 1
+    level = positions[position]
+    # Level is either category or word
+    if level == "category":
+        words = db.execute("SELECT * FROM word WHERE category_id IN (SELECT id FROM category WHERE language_id=?)", reference)
     else:
-        ratio = word["times_answered_wrong"] / word["times_tested"]
+        words = db.execute("SELECT * FROM word WHERE category_id=?", reference)        
 
-    if ratio == 0:
-        ratio = 0.05
+    for word in words:
+        probability = word["probability_to_be_in_test"]
 
-    print(f"ratio: {ratio}")
+        if is_considered(probability):
+            print(word["name"], end=": ")
+
+            answer = input()
+            if answer != word["meaning"]:
+                print("Correct answer: " + word["meaning"])
+                db.execute("UPDATE word SET times_answered_wrong = times_tested + 1 WHERE id=?", word["id"])
+
+            db.execute("UPDATE word SET times_tested = times_tested + 1 WHERE id=?", word["id"])
+
+
+
+def optimize_test(reference):
+    level = positions[position]
+
+    if level == "category":
+        words = db.execute("SELECT * FROM word WHERE category_id IN (SELECT id FROM category WHERE language_id=?)", reference)
+    else:
+        words = db.execute("SELECT * FROM word WHERE category_id=?", reference)        
+
     
-    db.execute("UPDATE word SET probability_to_be_in_test = ? WHERE id=?", ratio, word["id"])
-    
-    #
-    print("word probability_to_be_in_test in optimize_word_for_test(): ", end="")
-    print(word["probability_to_be_in_test"])
+
+    for word in words:
+        if word["times_tested"] == 0:
+            ratio = 1
+
+        elif word["times_answered_wrong"] == 0:
+                ratio = 0.05
+        
+        else:
+            ratio = word["times_answered_wrong"] / word["times_tested"]
+
+
+
+        db.execute("UPDATE word SET probability_to_be_in_test = ? WHERE id=?", ratio, word["id"])
     return
 
 

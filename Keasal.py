@@ -1,3 +1,4 @@
+import random                
 from cs50 import SQL
 
 db = SQL("sqlite:///KeasalDB.db")
@@ -209,17 +210,54 @@ def represent_lang_words(cmd, reference):
         words = db.execute("SELECT * FROM word WHERE category_id=?", reference)        
 
     for word in words:
-        print(word["name"], end=": ")
-        
         if cmd == "7":
-            answer = input()
-            if answer != word["meaning"]:
-                print("Correct answer: " + word["meaning"])
-        
+            optimize_test(reference)
+            
+            probability = word["probability_to_be_in_test"]
+            if is_considered(probability):
+                print(word["name"], end=": ")
+                #dbg
+                print("yoooo")
+                #
+                answer = input()
+                if answer != word["meaning"]:
+                    print("Correct answer: " + word["meaning"])
+                    db.execute("UPDATE word SET times_answered_wrong = times_tested + 1")
+
+                db.execute("UPDATE word SET times_tested = times_tested + 1")
+
         else:
+            print(word["name"], end=": ")
+        
             if cmd == "6":
                 input()
             print(word["meaning"])
+        # if cmd == "7":
+            # answer = input()
+            # if answer != word["meaning"]:
+            #     print("Correct answer: " + word["meaning"])
+            #     db.execute("UPDATE word SET times_answered_wrong = times_tested + 1")
+
+            # db.execute("UPDATE word SET times_tested = times_tested + 1")
+        
+        # else:
+            # if cmd == "6":
+            #     input()
+            # print(word["meaning"])
+
+def optimize_test(reference):
+    words = db.execute("SELECT * FROM word WHERE category_id=?", reference)
+
+    for word in words:
+        if word["times_tested"] == 0:
+            ratio = 1
+        else:
+            ratio = word["times_answered_wrong"] / word["times_tested"]
+
+        db.execute("UPDATE word SET probability_to_be_in_test = ?", ratio)
+
+def is_considered(probability):
+    return random.random() < probability
 
 def add(reference, new_name):
     level = positions[position]
@@ -333,6 +371,13 @@ def print_about():
     print("!)You can always enter 'help' to be prompted of available commands")   
 
 def main():
+#test
+    # while True:
+    #     x = 1 / float(input())
+    #     print(x)
+    #     if is_considered(x):
+    #         print("yes")
+
     reference_id = 0
     command = "0"
     while command != "exit":

@@ -115,7 +115,7 @@ def guide(reference):
             header = "Keasal"
             no_of_underlines = ABOUT_PAGE_UNDERLINES
         if position == 1:
-            header = "Your Languages"
+            header = "Home"
 
     else:
         element = db.execute("SELECT * FROM ? WHERE id=?", prev_level, reference)
@@ -149,7 +149,8 @@ def guide(reference):
         print(f"4.Remove {level}")
 
     if position == 2:
-        print(f"5.Show all {level}")
+        next_level = positions[position+1]
+        print(f"5.Show all {next_level}s")
 
     if 1 < position:
         print(f"6.Peek at words")
@@ -364,9 +365,16 @@ def take_entry(reference, action_prompt="access", attribute_prompt="name"):
         return CANCEL_PROMPT
     return entry
 
+def plural(word):
+    if word[-1] == "y":
+        return word[0:-1] + "ies"
+    else:
+        return word + "s"
+
 def print_elements(reference):
     level = positions[position]
-    print("Current elements: { ")
+    elements_plur = plural(level)
+    print(f"{elements_plur}: [")
 
     if level == "word":
         elements = db.execute("SELECT * FROM ? WHERE category_id = ? ORDER BY id DESC", level, reference)
@@ -382,7 +390,7 @@ def print_elements(reference):
         for el in elements:
             print(el["name"])
 
-    print("}")
+    print("]")
 
 def print_about():
     print("This program helps expand your vocabulary when learning a new language")

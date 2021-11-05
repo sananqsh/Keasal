@@ -145,7 +145,7 @@ def guide(reference):
         print(f"4.Remove {level}")
 
     if position == 2:
-        print(f"5.Show all words{level}") 
+        print(f"5.Show all {level}") 
 
     if 1 < position: 
         print(f"6.Peek at words")

@@ -3,9 +3,7 @@
 
 This program helps expand your vocabulary when learning a new language
 
-It provides you three levels of: language, category and word
-
-That`s right! you can store words in different languages and have them categorized!
+You can store words in different languages and have them categorized!
 #
 The name of this project is **Keasal**, a Kurdish word meaning **turtle**,
 which is a symbol of wisdom and patience.

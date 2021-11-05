@@ -1,4 +1,4 @@
-import random                
+import random
 from cs50 import SQL
 
 db = SQL("sqlite:///KeasalDB.db")
@@ -8,6 +8,8 @@ position = 0
 positions = ["about", "language", "category", "word"]
 
 DEFAULT_UNDERLINES = 16
+
+ABOUT_PAGE_UNDERLINES = 38
 
 CANCEL_PROMPT = "Cancelled"
 
@@ -33,8 +35,8 @@ def keasalpy(cmd, ref_id):
         ref_id = 0
         guide(ref_id)
 
-    cur_lvl = positions[position]       
-    
+    cur_lvl = positions[position]
+
     if cmd == "1":
         prev_ref = ref_id
 
@@ -55,7 +57,7 @@ def keasalpy(cmd, ref_id):
         position +=1
         guide(ref_id)
 
-    
+
     elif cmd == "2":
         new_element = take_entry(ref_id, "add")
         if new_element == CANCEL_PROMPT:
@@ -74,7 +76,7 @@ def keasalpy(cmd, ref_id):
             return ref_id
 
         target_element = fetch_element(entry, ref_id)
-        
+
         if target_element == False:    # Exception
             print(f"Such {cur_lvl} does not exist!")
             return ref_id
@@ -89,11 +91,11 @@ def keasalpy(cmd, ref_id):
     elif cmd in {"5", "6"} :
         represent_lang_words(cmd, ref_id)
         return ref_id
-    
+
     elif cmd == "7":
         take_test(ref_id)
         return ref_id
-    
+
     elif cmd == "help":
         guide(ref_id)
         return ref_id
@@ -107,9 +109,11 @@ def guide(reference):
     prev_level = positions[position-1]
     level = positions[position]
 
+    no_of_underlines = DEFAULT_UNDERLINES
     if reference == 0:
         if position == 0:
             header = "Keasal"
+            no_of_underlines = ABOUT_PAGE_UNDERLINES
         if position == 1:
             header = "Your Languages"
 
@@ -117,7 +121,7 @@ def guide(reference):
         element = db.execute("SELECT * FROM ? WHERE id=?", prev_level, reference)
         header = element[0]["name"]
 
-    generate_borderline(DEFAULT_UNDERLINES, header)
+    generate_borderline(no_of_underlines, header)
 
     if position in range(1, 4):
        print_elements(reference)
@@ -126,7 +130,7 @@ def guide(reference):
         print_about()
 
     ### PROPMTS
-   
+
     if position == 1:
         print("00.About")
 
@@ -145,24 +149,24 @@ def guide(reference):
         print(f"4.Remove {level}")
 
     if position == 2:
-        print(f"5.Show all {level}") 
+        print(f"5.Show all {level}")
 
-    if 1 < position: 
+    if 1 < position:
         print(f"6.Peek at words")
         print(f"7.Take test")
 
     print("exit.To stop the program")
 
-    generate_borderline(DEFAULT_UNDERLINES)
+    generate_borderline(no_of_underlines)
 
 def generate_borderline(n, title=""):
     edge_size = n - len(str(title))//2
-    
+
     for x in range(0, edge_size):
         print("_", end="")
 
     print(title, end="")
-    
+
     for x in range(0, edge_size):
         print("_", end="")
 
@@ -171,7 +175,7 @@ def generate_borderline(n, title=""):
 def cancelling(text):
     if text == "cancel":
         return True
-    return False    
+    return False
 
 def is_valid_command(cmd):
     if cmd == "help":
@@ -184,7 +188,7 @@ def is_valid_command(cmd):
 
     if cmd in {"0", "2"}:
         return True
-    
+
     if cmd == "1":
         if position in range(0, 3):
             return True
@@ -203,7 +207,7 @@ def is_valid_command(cmd):
     if cmd in {"6", "7"}:
         if position in {2, 3}:
             return True
-        return False            
+        return False
 
     else:
         return False
@@ -215,11 +219,11 @@ def represent_lang_words(cmd, reference):
     if level == "category":
         words = db.execute("SELECT * FROM word WHERE category_id IN (SELECT id FROM category WHERE language_id=?) ORDER BY id DESC", reference)
     else:
-        words = db.execute("SELECT * FROM word WHERE category_id=? ORDER BY id DESC", reference)        
+        words = db.execute("SELECT * FROM word WHERE category_id=? ORDER BY id DESC", reference)
 
     for word in words:
         print(word["name"], end=": ")
-    
+
         if cmd == "6":
             input()
         print(word["meaning"])
@@ -233,10 +237,10 @@ def take_test(reference):
     if level == "category":
         words = db.execute("SELECT * FROM word WHERE category_id IN (SELECT id FROM category WHERE language_id=?) ORDER BY id DESC", reference)
     else:
-        words = db.execute("SELECT * FROM word WHERE category_id=? ORDER BY id DESC", reference)        
+        words = db.execute("SELECT * FROM word WHERE category_id=? ORDER BY id DESC", reference)
 
     # MINIMUM_TEST_SUBJECTS is complied; if there`s surplus in older words, user`s dominance on them determines if it is considered in test or not (so priority is with newer words and then user dominance)
-    no_of_subjects = 0    
+    no_of_subjects = 0
     for word in words:
         probability = word["probability_to_be_in_test"]
 
@@ -246,7 +250,7 @@ def take_test(reference):
 
         elif is_considered(probability):
             test_word(word)
-        
+
 
 def optimize_test(reference):
     level = positions[position]
@@ -254,7 +258,7 @@ def optimize_test(reference):
     if level == "category":
         words = db.execute("SELECT * FROM word WHERE category_id IN (SELECT id FROM category WHERE language_id=?) ORDER BY id DESC", reference)
     else:
-        words = db.execute("SELECT * FROM word WHERE category_id=? ORDER BY id DESC", reference)        
+        words = db.execute("SELECT * FROM word WHERE category_id=? ORDER BY id DESC", reference)
 
     for word in words:
         if word["times_tested"] == 0:
@@ -262,7 +266,7 @@ def optimize_test(reference):
 
         elif word["times_answered_wrong"] == 0:
                 ratio = 0.5
-        
+
         else:
             ratio = word["times_answered_wrong"] / word["times_tested"]
 
@@ -328,19 +332,19 @@ def edit(element_id):
 
 def remove(element_id):
     level = positions[position]
-    db.execute("DELETE FROM ? where id = ?;", level, element_id)    
+    db.execute("DELETE FROM ? where id = ?;", level, element_id)
 
 def fetch_element(target, reference):
     result = already_exists(target, reference)
     if not result:
         # Such element does not exist
         return False
-    
+
     return result
 
 def already_exists(name, reference=0):
     level = positions[position]
-    
+
     if level == "language":
         selected = db.execute("SELECT * FROM ? WHERE name = ?", level, name)
     elif level == "category":
@@ -382,16 +386,13 @@ def print_elements(reference):
 
 def print_about():
     print("This program helps expand your vocabulary when learning a new language")
-    print("It provides you three levels of: language, category and word")
-    print("That`s right! you can store words in different languages and have them categorized!")
+    print("You can store words in different languages and have them categorized!")
     print("The name of this project is 'Keasal', a Kurdish word meaning 'turtle',")
-    print("which is a symbol of wisdom and patience. May you enjoy your journey ;)")
-    print("!!!)You can add and store similar words in different languages and categories") 
-    print("     but while taking test in the related section, your answer must match the ")
-    print("     meaning in THAT word in THAT section")
-
-    print("!)Pay attention to the prompts and follow them")
-    print("!)You can always enter 'help' to be prompted of available commands")   
+    print("a symbol of wisdom and patience.")
+    print("May you have a wonderful journey ;)")
+    print("!)You can always enter 'help' to be prompted of available commands")
+    print("!)If (KeasalDB.db) file is lost, you can have it back in this repository:")
+    print("     github.com/sananqsh/Keasal")
 
 def main():
     reference_id = 0

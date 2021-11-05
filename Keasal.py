@@ -156,7 +156,6 @@ def guide(reference):
     generate_borderline(DEFAULT_UNDERLINES)
 
 def generate_borderline(n, title=""):
-    print(len(title))
     edge_size = n - len(str(title))//2
     
     for x in range(0, edge_size):

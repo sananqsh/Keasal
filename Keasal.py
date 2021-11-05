@@ -11,6 +11,8 @@ DEFAULT_UNDERLINES = 16
 
 CANCEL_PROMPT = "Cancelled"
 
+MINIMUM_TEST_SUBJECTS = 10
+
 def keasalpy(cmd, ref_id):
     global position
 
@@ -206,15 +208,14 @@ def is_valid_command(cmd):
     else:
         return False
 
-
-# TODO: isolate cmd=="7" code from 5 and 6
+#TODO: def fetch_words(ref_id)
 def represent_lang_words(cmd, reference):
     level = positions[position]
     # Level is either category or word
     if level == "category":
-        words = db.execute("SELECT * FROM word WHERE category_id IN (SELECT id FROM category WHERE language_id=?)", reference)
+        words = db.execute("SELECT * FROM word WHERE category_id IN (SELECT id FROM category WHERE language_id=?) ORDER BY id DESC", reference)
     else:
-        words = db.execute("SELECT * FROM word WHERE category_id=?", reference)        
+        words = db.execute("SELECT * FROM word WHERE category_id=? ORDER BY id DESC", reference)        
 
     for word in words:
         print(word["name"], end=": ")
@@ -230,53 +231,56 @@ def take_test(reference):
     level = positions[position]
     # Level is either category or word
     if level == "category":
-        words = db.execute("SELECT * FROM word WHERE category_id IN (SELECT id FROM category WHERE language_id=?)", reference)
+        words = db.execute("SELECT * FROM word WHERE category_id IN (SELECT id FROM category WHERE language_id=?) ORDER BY id DESC", reference)
     else:
-        words = db.execute("SELECT * FROM word WHERE category_id=?", reference)        
+        words = db.execute("SELECT * FROM word WHERE category_id=? ORDER BY id DESC", reference)        
 
+    # MINIMUM_TEST_SUBJECTS is complied; if there`s surplus in older words, user`s dominance on them determines if it is considered in test or not (so priority is with newer words and then user dominance)
+    no_of_subjects = 0    
     for word in words:
         probability = word["probability_to_be_in_test"]
 
-        if is_considered(probability):
-            print(word["name"], end=": ")
+        if no_of_subjects < MINIMUM_TEST_SUBJECTS:
+            test_word(word)
+            no_of_subjects += 1
 
-            answer = input()
-            if answer != word["meaning"]:
-                print("Correct answer: " + word["meaning"])
-                db.execute("UPDATE word SET times_answered_wrong = times_tested + 1 WHERE id=?", word["id"])
-
-            db.execute("UPDATE word SET times_tested = times_tested + 1 WHERE id=?", word["id"])
-
-
+        elif is_considered(probability):
+            test_word(word)
+        
 
 def optimize_test(reference):
     level = positions[position]
 
     if level == "category":
-        words = db.execute("SELECT * FROM word WHERE category_id IN (SELECT id FROM category WHERE language_id=?)", reference)
+        words = db.execute("SELECT * FROM word WHERE category_id IN (SELECT id FROM category WHERE language_id=?) ORDER BY id DESC", reference)
     else:
-        words = db.execute("SELECT * FROM word WHERE category_id=?", reference)        
-
-    
+        words = db.execute("SELECT * FROM word WHERE category_id=? ORDER BY id DESC", reference)        
 
     for word in words:
         if word["times_tested"] == 0:
             ratio = 1
 
         elif word["times_answered_wrong"] == 0:
-                ratio = 0.05
+                ratio = 0.5
         
         else:
             ratio = word["times_answered_wrong"] / word["times_tested"]
 
-
-
         db.execute("UPDATE word SET probability_to_be_in_test = ? WHERE id=?", ratio, word["id"])
     return
 
-
 def is_considered(probability):
     return random.random() < probability
+
+def test_word(word):
+    print(word["name"], end=": ")
+
+    answer = input()
+    if answer != word["meaning"]:
+        print("Correct answer: " + word["meaning"])
+        db.execute("UPDATE word SET times_answered_wrong = times_tested + 1 WHERE id=?", word["id"])
+
+    db.execute("UPDATE word SET times_tested = times_tested + 1 WHERE id=?", word["id"])
 
 def add(reference, new_name):
     level = positions[position]
@@ -361,15 +365,15 @@ def print_elements(reference):
     print("Current elements: { ")
 
     if level == "word":
-        elements = db.execute("SELECT * FROM ? WHERE category_id = ?;", level, reference)
+        elements = db.execute("SELECT * FROM ? WHERE category_id = ? ORDER BY id DESC", level, reference)
         for el in elements:
             print(el["name"], end=": ")
             print(el["meaning"])
     else:
         if level == "language":
-            elements = db.execute("SELECT name FROM ?;", level)
+            elements = db.execute("SELECT name FROM ? ORDER BY id DESC", level)
         elif level == "category":
-            elements = db.execute("SELECT name FROM ? WHERE language_id = ?;", level, reference)
+            elements = db.execute("SELECT name FROM ? WHERE language_id = ? ORDER BY id DESC", level, reference)
 
         for el in elements:
             print(el["name"])
@@ -390,13 +394,6 @@ def print_about():
     print("!)You can always enter 'help' to be prompted of available commands")   
 
 def main():
-#test
-    # while True:
-    #     x = 1 / float(input())
-    #     print(x)
-    #     if is_considered(x):
-    #         print("yes")
-
     reference_id = 0
     command = "0"
     while command != "exit":
